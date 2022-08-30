@@ -9,6 +9,9 @@ also added the full ramlook function number lookups
 
 1.8.1
 now added ram speed
+
+1.8.2
+added os build and condensed repeated varaibles using .
 #>
 
 #this keeps a hashtable for the ram lookup, i'm not sure if this can be seperated out but it seems to work like this so for now i'll keep it like this
@@ -73,18 +76,16 @@ function pclookuptable {
         $ProcN = (Get-WmiObject -Class Win32_Processor -ComputerName $PCname -Credential $Credential).name
         $RAMST = ramlook
         $HdS = Get-WmiObject -Class MSFT_PhysicalDisk -Namespace root\Microsoft\Windows\Storage -ComputerName $PCname -Credential $Credential | Format-Table @{Name="GB"; Expression={[math]::round($_.size/1GB, 2)}},friendlyname
-        $OSN = (Get-WMIObject -Class win32_operatingsystem -ComputerName $PCname -Credential $Credential).name
         $MoboS = (Get-WmiObject -Class win32_baseboard -ComputerName $PCname -Credential $Credential).serialnumber
         $GPUN = (Get-WmiObject -Class Win32_VideoController -ComputerName $PCname -Credential $Credential).description
         $LogN = (Get-WmiObject -Class Win32_Process -ComputerName $PCname -Credential $Credential -Filter 'Name="explorer.exe"').
             GetOwner().
             User
-        $ModelMa = (Get-WmiObject -Class:Win32_ComputerSystem -ComputerName $PCname -Credential $Credential).Manufacturer
-        $ModelMO = (Get-WmiObject -Class:Win32_ComputerSystem -ComputerName $PCname -Credential $Credential).Model
-        $OStype = (get-wmiobject win32_operatingsystem -ComputerName $PCname -Credential $Credential).OSArchitecture
+        $Model = (Get-WmiObject -Class:Win32_ComputerSystem -ComputerName $PCname -Credential $Credential)
+        $OStype = (get-wmiobject win32_operatingsystem -ComputerName $PCname -Credential $Credential)
         $Prnt = (Get-WMIObject Win32_Printer -ComputerName $PCname -Credential $Credential).Name
         $NetIDs = Get-WmiObject -Class "Win32_NetworkAdapterConfiguration" -ComputerName $PCName -Credential $Credential -Filter "IpEnabled = TRUE"
-
+        
     #not working yet    $Drv = Get-PSDrive -ComputerName $PCname -Credential $Credential
 
         Write-Host _____________________________________________
@@ -98,8 +99,8 @@ function pclookuptable {
         $MoboM
         Write-Host _____________________________________________
         Write-Host ↓ $PCname ↓ Computer Vendor model ↓
-        $ModelMa
-        $ModelMO
+        $Model.Manufacturer
+        $Model.Model
         Write-Host _____________________________________________
         Write-Host ↓ $PCname ↓ processor name ↓
         $ProcN
@@ -112,7 +113,7 @@ function pclookuptable {
         $HdS
         Write-Host _____________________________________________
         Write-Host ↓ $PCname ↓ Operating system ↓
-        $OSN
+        $OStype.caption
         Write-Host _____________________________________________
         Write-Host ↓ $PCname ↓ Graphics card name ↓
         $GPUN
@@ -120,8 +121,10 @@ function pclookuptable {
         Write-Host ↓ $PCname ↓ logged on username ↓
         $LogN
         Write-Host _____________________________________________
-        Write-Host ↓ $PCname ↓ os type ↓
-        $OStype
+        Write-Host ↓ $PCname ↓ os type ↓ version
+        $OStype.OSArchitecture
+        $OStype.version
+        $OStype.BuildNumber
         Write-Host _____________________________________________
         Write-Host ↓ $PCname ↓ Printers ↓
         $Prnt
@@ -145,11 +148,3 @@ while ( $true ) {testpc}
 
 
 testpc
-
-
-#need to seperate this out into another script or put it as a switch
-
-#        $Ans = Read-Host -Prompt "do you want to see the software list? y/n" 
-#                    If ($Ans -eq 'Y') {
-#      Get-WmiObject -Class Win32_Product -ComputerName $PCname -Credential $Credential | Format-Table Name
-#    }
